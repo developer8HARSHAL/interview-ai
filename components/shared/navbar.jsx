@@ -1,16 +1,17 @@
- 
 // components/shared/navbar.jsx
 
 "use client";
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
-import { Button } from '../ui/button'; // Make sure this path is correct
+import { Button } from '../ui/button';
+import { useAuth } from '@/lib/auth-context';
+import Image from 'next/image';
 
 export function Navbar() {
-  const { data: session } = useSession();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -26,7 +27,7 @@ export function Navbar() {
               <Link href="/" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                 Home
               </Link>
-              {session && (
+              {user && (
                 <Link href="/interview" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                   Interview
                 </Link>
@@ -37,12 +38,42 @@ export function Navbar() {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            {session ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-gray-700">
-                  {session.user.name || session.user.email}
-                </span>
-                <Button variant="outline" onClick={() => signOut()}>Sign out</Button>
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  <span className="sr-only">Open user menu</span>
+                  {user.photoURL ? (
+                    <Image
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 rounded-full"
+                      src={user.photoURL}
+                      alt="User profile"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                      {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                    </div>
+                  )}
+                </button>
+                
+                {/* Profile dropdown */}
+                {profileMenuOpen && (
+                  <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div className="block px-4 py-2 text-sm text-gray-700">
+                      {user.displayName || user.email}
+                    </div>
+                    <button
+                      onClick={logout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex space-x-4">
@@ -78,7 +109,7 @@ export function Navbar() {
             <Link href="/" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
               Home
             </Link>
-            {session && (
+            {user && (
               <Link href="/interview" className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">
                 Interview
               </Link>
@@ -88,11 +119,27 @@ export function Navbar() {
             </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
-            {session ? (
+            {user ? (
               <div className="flex items-center px-4">
+                <div className="flex-shrink-0">
+                  {user.photoURL ? (
+                  <img
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded-full"
+                  src={user.photoURL}
+                  alt="User profile"
+                />
+                
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                      {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                    </div>
+                  )}
+                </div>
                 <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">{session.user.name || session.user.email}</div>
-                  <Button variant="outline" className="mt-2" onClick={() => signOut()}>Sign out</Button>
+                  <div className="text-base font-medium text-gray-800">{user.displayName || user.email}</div>
+                  <Button variant="outline" className="mt-2" onClick={logout}>Sign out</Button>
                 </div>
               </div>
             ) : (

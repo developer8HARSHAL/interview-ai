@@ -1,6 +1,4 @@
-// app/api/auth/register/route.js
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
 import { getUserByEmail, createUser } from '@/lib/utils/helpers';
 import bcrypt from 'bcryptjs';
 
@@ -15,8 +13,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-    
-    await connectToDatabase();
     
     // Check if user already exists
     const existingUser = await getUserByEmail(email);
