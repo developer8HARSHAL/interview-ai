@@ -1,12 +1,14 @@
+// app/(auth)/register/page.js
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth-context';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -17,6 +19,14 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { register, isAuthenticated, loading: authLoading } = useAuth();
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,41 +53,33 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to register');
+      const result = await register(name, email, password);
+      
+      if (!result.success) {
+        setError(result.error || 'Registration failed');
+        setLoading(false);
+      } else {
+        // Auto login was successful, redirect to home page
+        router.push('/');
       }
-
-      // Show success message via toast
-      toast({
-        title: 'Registration Successful',
-        description: 'Your account has been created.',
-        variant: 'success',
-      });
-
-      // Redirect directly to profile page after successful registration
-      setTimeout(() => {
-        router.push('/profile');
-      }, 1500);
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
+
+  const handleGoogleLogin = async () => {
+    // Placeholder for Google OAuth flow
+    window.location.href = '/api/auth/google/authorize';
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-[80vh]">
@@ -157,6 +159,23 @@ export default function RegisterPage() {
               {loading ? 'Creating account...' : 'Sign up'}
             </Button>
           </form>
+          
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500">Or continue with</span>
+            </div>
+          </div>
+          
+          <Button 
+            type="button" 
+            className="w-full bg-white text-black border border-gray-300 hover:bg-gray-100"
+            onClick={handleGoogleLogin}
+          >
+            Google
+          </Button>
           
           <p className="text-center mt-4 text-sm">
             Already have an account?{' '}

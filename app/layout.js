@@ -2,7 +2,8 @@
 import './globals.css';
 import { Navbar } from '@/components/shared/navbar';
 import { Footer } from '@/components/shared/footer';
-import { Providers } from './providers';
+import { NextAuthProvider } from './providers';
+import { AuthProvider } from '@/lib/auth-context';
 
 export const metadata = {
   title: 'Interview AI',
@@ -13,13 +14,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <Providers>
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </div>
-        </Providers>
+        <NextAuthProvider>
+          <AuthProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </div>
+          </AuthProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );

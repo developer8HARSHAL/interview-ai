@@ -1,55 +1,60 @@
-import { NextResponse } from 'next/server';
-import { getUserByEmail, createUser } from '@/lib/utils/helpers';
-import bcrypt from 'bcryptjs';
+// app/api/auth/register/route.js
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { connectDB } from "@/lib/db";
+import { User } from "@/lib/db/schema";
 
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const { name, email, password } = await req.json();
-    
+    const { name, email, password } = await request.json();
+
     // Validate input
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
-    
+
+    await connectDB();
+
     // Check if user already exists
-    const existingUser = await getUserByEmail(email);
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: "Email already in use" },
         { status: 409 }
       );
     }
-    
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     // Create new user
-    const userData = {
+    const newUser = await User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
-    };
-    
-    const newUser = await createUser(userData);
-    
+    });
+
+    // Return success without password
     return NextResponse.json(
       { 
         success: true,
+        message: "User registered successfully", 
         user: {
-          id: newUser._id,
+          id: newUser._id.toString(),
           name: newUser.name,
-          email: newUser.email,
+          email: newUser.email
         }
       },
       { status: 201 }
     );
+    
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     return NextResponse.json(
-      { error: 'Failed to register user' },
+      { success: false, error: "Failed to register user" },
       { status: 500 }
     );
   }
